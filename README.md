@@ -33,13 +33,6 @@ A fun, interactive web application that simulates a payment collection system wi
 - `killer_ntua/killer_ntua.html` - Main application file
 - `public/` - Static assets (images, etc.)
 
-## Customization
-
-You can customize the application by:
-- Changing the colors in the CSS gradients
-- Modifying the text content
-- Adding additional animations or effects
-- Extending the chat functionality
 
 ## License
 
@@ -47,4 +40,4 @@ MIT
 
 ## Author
 
-Asafopowers
+kalculusGuy
