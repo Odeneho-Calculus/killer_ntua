@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Collection</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            position: relative;
+        }
+
+        .payment-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            border: none;
+            padding: 30px 60px;
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .payment-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .payment-button:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .payment-button:hover:before {
+            left: 100%;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            border-radius: 25px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            transform: scale(0.7) translateY(50px);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-overlay.show .modal {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+            animation: modalShine 3s ease-in-out infinite;
+        }
+
+        @keyframes modalShine {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .modal-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .modal-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4);
+            animation: modalImagePulse 2s ease-in-out infinite;
+            overflow: hidden;
+            position: relative;
+        }
+
+        @keyframes modalImagePulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .modal-title {
+            font-size: 36px;
+            font-weight: 900;
+            color: white;
+            margin-bottom: 20px;
+            text-shadow:
+                1px 1px 0 #000,
+                2px 2px 0 #000,
+                3px 3px 0 #000,
+                4px 4px 0 #000,
+                5px 5px 10px rgba(0, 0, 0, 0.5);
+            letter-spacing: 2px;
+            transform: perspective(500px) rotateX(10deg);
+            animation: modalTitleFloat 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes modalTitleFloat {
+            0% {
+                transform: perspective(500px) rotateX(10deg) translateY(0);
+            }
+
+            100% {
+                transform: perspective(500px) rotateX(10deg) translateY(-10px);
+            }
+        }
+
+        @keyframes modalTextGlow {
+            from {
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3), 0 0 10px rgba(255, 107, 107, 0.3);
+            }
+
+            to {
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 107, 107, 0.6);
+            }
+        }
+
+        .modal-close {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            padding: 20px 40px;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-close:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .modal-close:hover:before {
+            left: 100%;
+        }
+
+        .modal-close:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .flash {
+            animation: flash 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-10px);
+            }
+
+            75% {
+                transform: translateX(10px);
+            }
+        }
+
+        @keyframes flash {
+
+            0%,
+            100% {
+                background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            }
+
+            50% {
+                background: linear-gradient(45deg, #ff0000, #cc0000);
+            }
+        }
+
+        .emoji {
+            font-size: 40px;
+            margin: 0 10px;
+            display: inline-block;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translateY(0);
+            }
+
+            40% {
+                transform: translateY(-10px);
+            }
+
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .title {
+            color: white;
+            font-size: 48px;
+            margin-bottom: 50px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5), 0 0 10px rgba(255, 255, 255, 0.3);
+            }
+
+            to {
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 255, 255, 0.6);
+            }
+        }
+
+        /* Calling Modal Styles */
+        .calling-modal {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            max-width: 500px;
+            width: 90%;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .calling-animation {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .phone-icon {
+            font-size: 100px;
+            margin-bottom: 30px;
+            animation: phoneShake 1s ease-in-out infinite;
+            text-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        @keyframes phoneShake {
+
+            0%,
+            100% {
+                transform: rotate(-10deg);
+            }
+
+            50% {
+                transform: rotate(10deg);
+            }
+        }
+
+        .calling-dots {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .dot {
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border-radius: 50%;
+            margin: 0 10px;
+            opacity: 0;
+            animation: dotPulse 1.5s infinite;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: 1s;
+        }
+
+        @keyframes dotPulse {
+
+            0%,
+            100% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.5);
+            }
+        }
+
+        .calling-title {
+            color: white;
+            font-size: 36px;
+            font-weight: bold;
+            margin-top: 20px;
+            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+            letter-spacing: 1px;
+        }
+
+        /* Chat Modal Styles - TikTok Style */
+        .chat-modal {
+            background: #000000;
+            max-width: 500px;
+            width: 90%;
+            border-radius: 12px;
+            padding: 0;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            color: white;
+            position: relative;
+        }
+
+        .chat-header {
+            background: #121212;
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .chat-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin-right: 15px;
+            position: relative;
+        }
+
+        .chat-avatar::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #FF0050, #00F2EA);
+            z-index: -1;
+            animation: rotate 4s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .chat-info {
+            flex: 1;
+        }
+
+        .chat-name {
+            font-weight: bold;
+            font-size: 20px;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+        }
+
+        .chat-name::after {
+            content: '✓';
+            display: inline-block;
+            background: #20D5EC;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
+            margin-left: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-status {
+            font-size: 14px;
+            opacity: 0.7;
+            display: flex;
+            align-items: center;
+        }
+
+        .chat-status::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #FE2C55;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .chat-close {
+            font-size: 24px;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .chat-body {
+            padding: 20px;
+            height: 350px;
+            overflow-y: auto;
+            background: #121212;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .chat-message {
+            margin-bottom: 0;
+            animation: tiktokMessageAppear 0.5s ease-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        @keyframes tiktokMessageAppear {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .message-bubble {
+            background: transparent;
+            padding: 0;
+            max-width: 100%;
+            margin: 0 auto;
+            position: relative;
+            box-shadow: none;
+        }
+
+        .message-bubble p {
+            margin: 0;
+            font-size: 32px;
+            line-height: 1.4;
+            font-weight: 700;
+            background: linear-gradient(45deg, #FF0050, #00F2EA);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+            text-shadow: 0 2px 10px rgba(255, 0, 80, 0.3);
+            padding: 20px 0;
+            animation: textPulse 2s infinite alternate;
+        }
+
+        @keyframes textPulse {
+            0% {
+                transform: scale(1);
+            }
+
+            100% {
+                transform: scale(1.05);
+            }
+        }
+
+        .message-time {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            text-align: center;
+            margin-top: 15px;
+            margin-bottom: 30px;
+            font-weight: 400;
+        }
+
+        /* TikTok Reactions */
+        .tiktok-reactions {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-top: 20px;
+            padding: 15px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .reaction-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .reaction-item:hover {
+            transform: scale(1.1);
+        }
+
+        .reaction-icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .reaction-item:nth-child(1) .reaction-icon {
+            animation-delay: 0s;
+        }
+
+        .reaction-item:nth-child(2) .reaction-icon {
+            animation-delay: 0.5s;
+        }
+
+        .reaction-item:nth-child(3) .reaction-icon {
+            animation-delay: 1s;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .reaction-count {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="title">💰 Payment Collection System 💰</h1>
+        <button class="payment-button" id="collectBtn">
+            <span class="emoji">💸</span>
+            Collect Payment
+            <span class="emoji">💸</span>
+        </button>
+    </div>
+
+    <!-- First Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-content">
+                <div class="modal-image" style="background: none; overflow: hidden;">
+                    <img src="kntua.jpg" alt="NTUA Logo"
+                        style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                </div>
+                <div class="modal-title">KILLER NTUA</div>
+                <button class="modal-close" id="callAzuleBtn">Frɛ Azule!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calling Azule Modal -->
+    <div class="modal-overlay" id="callingModal">
+        <div class="modal calling-modal">
+            <div class="modal-content">
+                <div class="calling-animation">
+                    <div class="phone-icon">📞</div>
+                    <div class="calling-dots">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </div>
+                </div>
+                <div class="modal-title calling-title">Mefrɛ Azule...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Azule Chat Modal - TikTok Style -->
+    <div class="modal-overlay" id="azuleChatModal">
+        <div class="modal chat-modal">
+            <div class="chat-header">
+                <div class="chat-avatar">
+                    <img src="kntua.jpg" alt="Azule"
+                        style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                </div>
+                <div class="chat-info">
+                    <div class="chat-name">Asafopowers</div>
+                    <div class="chat-status">LIVE</div>
+                </div>
+                <div class="chat-close" id="closeChat">✕</div>
+            </div>
+            <div class="chat-body">
+                <div class="chat-message">
+                    <div class="message-bubble">
+                        <p>Hɛɛ! Duly manka w'ate, Wɔfrɛ Azule..</p>
+                    </div>
+                    <div class="message-time">@asafopowers · Just now</div>
+                </div>
+
+                <!-- TikTok-style reactions -->
+                <div class="tiktok-reactions">
+                    <div class="reaction-item">
+                        <div class="reaction-icon">❤️</div>
+                        <div class="reaction-count">2.4K</div>
+                    </div>
+                    <div class="reaction-item">
+                        <div class="reaction-icon">💬</div>
+                        <div class="reaction-count">156</div>
+                    </div>
+                    <div class="reaction-item">
+                        <div class="reaction-icon">⤴️</div>
+                        <div class="reaction-count">Share</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const button = document.getElementById('collectBtn');
+        const modal = document.getElementById('modalOverlay');
+        const callingModal = document.getElementById('callingModal');
+        const azuleChatModal = document.getElementById('azuleChatModal');
+        const callAzuleBtn = document.getElementById('callAzuleBtn');
+        const closeChat = document.getElementById('closeChat');
+
+        button.addEventListener('click', function () {
+            // Add shake and flash effects
+            button.classList.add('shake', 'flash');
+
+            // Show the modal after button animation
+            setTimeout(() => {
+                modal.classList.add('show');
+            }, 300);
+
+            // Remove animation classes after animation completes
+            setTimeout(() => {
+                button.classList.remove('shake', 'flash');
+            }, 500);
+        });
+
+        // Call Azule button functionality
+        callAzuleBtn.addEventListener('click', function () {
+            // Hide first modal
+            modal.classList.remove('show');
+
+            // Show calling modal
+            setTimeout(() => {
+                callingModal.classList.add('show');
+
+                // After 3 seconds, show the chat modal
+                setTimeout(() => {
+                    callingModal.classList.remove('show');
+                    azuleChatModal.classList.add('show');
+
+                    // Add typing animation effect for the message
+                    const messageBubble = document.querySelector('.message-bubble p');
+                    const originalText = messageBubble.textContent;
+                    messageBubble.textContent = '';
+
+                    let i = 0;
+                    const typingEffect = setInterval(() => {
+                        if (i < originalText.length) {
+                            messageBubble.textContent += originalText.charAt(i);
+                            i++;
+                        } else {
+                            clearInterval(typingEffect);
+
+                            // Add TikTok-style heart animation after message appears
+                            setTimeout(() => {
+                                addFloatingHearts();
+                            }, 500);
+                        }
+                    }, 50);
+
+                    // Set up reaction interactions
+                    setTimeout(() => {
+                        document.querySelectorAll('.reaction-item').forEach(item => {
+                            item.addEventListener('click', function () {
+                                const countEl = this.querySelector('.reaction-count');
+                                if (this.querySelector('.reaction-icon').textContent === '❤️') {
+                                    // Increment like count
+                                    let count = parseFloat(countEl.textContent);
+                                    countEl.textContent = (count + 0.1).toFixed(1) + 'K';
+                                    addFloatingHearts();
+                                }
+                            });
+                        });
+                    }, 4000);
+
+                }, 3000);
+            }, 300);
+        });
+
+        // Close chat functionality
+        closeChat.addEventListener('click', function () {
+            azuleChatModal.classList.remove('show');
+        });
+
+        // Close modals when clicking outside
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) {
+                    overlay.classList.remove('show');
+                }
+            });
+        });
+
+        // Close modals with Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay').forEach(overlay => {
+                    overlay.classList.remove('show');
+                });
+            }
+        });
+
+        // Add some sparkle effects
+        function createSparkle() {
+            const sparkle = document.createElement('div');
+            sparkle.innerHTML = '✨';
+            sparkle.style.position = 'absolute';
+            sparkle.style.fontSize = '20px';
+            sparkle.style.pointerEvents = 'none';
+            sparkle.style.left = Math.random() * window.innerWidth + 'px';
+            sparkle.style.top = Math.random() * window.innerHeight + 'px';
+            sparkle.style.animation = 'sparkle 2s ease-out forwards';
+
+            document.body.appendChild(sparkle);
+
+            setTimeout(() => {
+                sparkle.remove();
+            }, 2000);
+        }
+
+        // Add sparkle animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes sparkle {
+                0% { opacity: 1; transform: scale(0) rotate(0deg); }
+                50% { opacity: 1; transform: scale(1) rotate(180deg); }
+                100% { opacity: 0; transform: scale(0) rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Create sparkles periodically
+        setInterval(createSparkle, 1000);
+
+        // Add sound effects
+        function playCallSound() {
+            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3');
+            audio.volume = 0.3;
+            audio.play();
+        }
+
+        callAzuleBtn.addEventListener('click', playCallSound);
+
+        // TikTok-style floating hearts animation
+        function addFloatingHearts() {
+            const chatBody = document.querySelector('.chat-body');
+            const heartsCount = Math.floor(Math.random() * 5) + 5; // 5-10 hearts
+
+            for (let i = 0; i < heartsCount; i++) {
+                const heart = document.createElement('div');
+                heart.innerHTML = '❤️';
+                heart.className = 'floating-heart';
+                heart.style.left = Math.random() * 80 + 10 + '%';
+                heart.style.animationDuration = (Math.random() * 2 + 2) + 's'; // 2-4s
+                heart.style.opacity = Math.random() * 0.5 + 0.5; // 0.5-1
+                heart.style.fontSize = (Math.random() * 20 + 15) + 'px'; // 15-35px
+
+                chatBody.appendChild(heart);
+
+                // Remove heart after animation completes
+                setTimeout(() => {
+                    heart.remove();
+                }, 4000);
+            }
+        }
+
+        // Add floating hearts CSS
+        const heartStyle = document.createElement('style');
+        heartStyle.textContent = `
+            .floating-heart {
+                position: absolute;
+                bottom: 20%;
+                animation: floatUp 3s ease-in forwards;
+                z-index: 10;
+                pointer-events: none;
+            }
+
+            @keyframes floatUp {
+                0% {
+                    transform: translateY(0) scale(1) rotate(0deg);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translateY(-100vh) scale(1.5) rotate(20deg);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(heartStyle);
+    </script>
+</body>
+
+</html>
